@@ -71,7 +71,7 @@ export default function Register() {
         toast({
           variant: "destructive",
           title: "Invalid input",
-          description: error.errors[0].message,
+          description: error.issues[0].message,
         });
       }
     } finally {
