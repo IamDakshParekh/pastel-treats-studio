@@ -1,146 +1,117 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
-import { Product } from '@/contexts/CartContext';
-import macaronsImage from '@/assets/macarons.jpg';
-import chocolatesImage from '@/assets/chocolates.jpg';
-import cupcakesImage from '@/assets/cupcakes.jpg';
-import giftBoxesImage from '@/assets/gift-boxes.jpg';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  stock: number;
+}
 
 const Products = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(['all']);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
-  const categories = ['All', 'Macarons', 'Chocolates', 'Cupcakes', 'Gift Boxes'];
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-  const products: Product[] = [
-    {
-      id: '1',
-      name: 'French Macarons Set',
-      price: 24.99,
-      image: macaronsImage,
-      description: 'Delicate almond cookies with silky ganache filling in assorted flavors.',
-      category: 'Macarons'
-    },
-    {
-      id: '2',
-      name: 'Artisanal Chocolate Box',
-      price: 34.99,
-      image: chocolatesImage,
-      description: 'Premium Belgian chocolates with unique fillings and elegant presentation.',
-      category: 'Chocolates'
-    },
-    {
-      id: '3',
-      name: 'Vanilla Dream Cupcakes',
-      price: 18.99,
-      image: cupcakesImage,
-      description: 'Fluffy vanilla cupcakes topped with buttercream and edible flowers.',
-      category: 'Cupcakes'
-    },
-    {
-      id: '4',
-      name: 'Festive Gift Collection',
-      price: 49.99,
-      image: giftBoxesImage,
-      description: 'Elegant gift boxes with assorted confections perfect for special occasions.',
-      category: 'Gift Boxes'
-    },
-    {
-      id: '5',
-      name: 'Rose Petal Macarons',
-      price: 28.99,
-      image: macaronsImage,
-      description: 'Delicate rose-flavored macarons with real rose petals and pink buttercream.',
-      category: 'Macarons'
-    },
-    {
-      id: '6',
-      name: 'Dark Chocolate Truffles',
-      price: 26.99,
-      image: chocolatesImage,
-      description: 'Rich dark chocolate truffles dusted with cocoa powder and sea salt.',
-      category: 'Chocolates'
-    },
-    {
-      id: '7',
-      name: 'Birthday Celebration Set',
-      price: 39.99,
-      image: cupcakesImage,
-      description: 'Colorful birthday cupcakes with rainbow sprinkles and candles included.',
-      category: 'Cupcakes'
-    },
-    {
-      id: '8',
-      name: 'Premium Holiday Box',
-      price: 64.99,
-      image: giftBoxesImage,
-      description: 'Luxury holiday collection with seasonal treats and premium packaging.',
-      category: 'Gift Boxes'
+      if (error) throw error;
+
+      setProducts(data || []);
+      
+      // Extract unique categories from products
+      const uniqueCategories = ['all', ...new Set((data || []).map(product => product.category))];
+      setCategories(uniqueCategories);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const filteredProducts = selectedCategory === 'All' 
+  const filteredProducts = selectedCategory === 'all' 
     ? products 
     : products.filter(product => product.category === selectedCategory);
+  
+  const getProductCount = (category: string) => {
+    if (category === 'all') return products.length;
+    return products.filter(product => product.category === category).length;
+  };
+
+  if (loading) {
+    return (
+      <section id="products" className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-primary rounded-full animate-pulse mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading products...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section id="products" className="py-20 bg-muted/30">
+    <section id="products" className="py-20 bg-background">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="font-sweet text-4xl md:text-5xl text-primary mb-4">
+        <div className="text-center mb-16">
+          <h2 className="font-sweet text-4xl md:text-5xl text-foreground mb-4">
             Our Sweet Collection
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover our handcrafted selection of premium confections, made with love and the finest ingredients.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Discover our handcrafted confections, made with love and the finest ingredients
           </p>
         </div>
 
         {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-3 mb-12">
+        <div className="flex flex-wrap justify-center gap-4 mb-12">
           {categories.map((category) => (
             <Button
               key={category}
               variant={selectedCategory === category ? "default" : "outline"}
               onClick={() => setSelectedCategory(category)}
-              className={selectedCategory === category 
-                ? "btn-sweet" 
-                : "border-primary/30 text-primary hover:bg-primary/10 transition-smooth"
-              }
+              className="capitalize sweet-hover"
             >
-              {category}
-              {category !== 'All' && (
-                <Badge 
-                  variant="secondary" 
-                  className="ml-2 bg-background/80 text-foreground"
-                >
-                  {products.filter(p => p.category === category).length}
-                </Badge>
-              )}
+              {category === 'all' ? 'All Products' : category.replace('-', ' ')} 
+              <span className="ml-2 text-xs bg-primary/20 px-2 py-1 rounded-full">
+                {getProductCount(category)}
+              </span>
             </Button>
           ))}
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="fade-in-up">
-              <ProductCard product={product} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mb-16">
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p className="text-xl text-muted-foreground">
+                No products found in this category
+              </p>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Empty State */}
-        {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4 opacity-50">🔍</div>
-            <h3 className="text-xl font-semibold mb-2">No products found</h3>
-            <p className="text-muted-foreground">Try selecting a different category.</p>
-          </div>
-        )}
-
-        {/* Featured Banner */}
+        {/* Custom Orders Banner */}
         <div className="mt-16 p-8 bg-primary/10 rounded-2xl text-center">
           <h3 className="font-sweet text-2xl md:text-3xl text-primary mb-4">
             Custom Orders Available! 🎂

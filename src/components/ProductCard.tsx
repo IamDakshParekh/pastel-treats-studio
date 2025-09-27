@@ -3,8 +3,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, Heart } from 'lucide-react';
-import { useCart, Product } from '@/contexts/CartContext';
+import { useCart } from '@/contexts/CartContext';
+
 import { useToast } from '@/hooks/use-toast';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string;
+  category: string;
+  stock: number;
+}
 
 interface ProductCardProps {
   product: Product;
@@ -27,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <Card className="group product-card overflow-hidden border-0 bg-card">
       <div className="relative overflow-hidden">
         <img 
-          src={product.image} 
+          src={product.image_url} 
           alt={product.name}
           className="w-full h-48 sm:h-56 object-cover transition-transform duration-500 group-hover:scale-110"
         />

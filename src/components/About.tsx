@@ -1,9 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Award, Users, Clock } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AboutContent {
+  title: string;
+  content: string;
+  image_url: string;
+}
 
 const About = () => {
+  const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAboutContent();
+  }, []);
+
+  const fetchAboutContent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('content')
+        .select('*')
+        .eq('section', 'about')
+        .single();
+
+      if (error) throw error;
+      setAboutContent(data);
+    } catch (error) {
+      console.error('Error fetching about content:', error);
+      // Fallback to default content
+      setAboutContent({
+        title: 'Our Sweet Story',
+        content: 'For over 70 years, Sweet Dreams Confectionery has been crafting the finest sweets with passion and dedication. Our master confectioners use only the highest quality ingredients, combining traditional techniques with innovative flavors to create unforgettable experiences. From our signature chocolates to our delicate pastries, every creation is a testament to our commitment to excellence and the joy of sharing something truly special.',
+        image_url: '/src/assets/chocolates.jpg'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const features = [
     {
       icon: Heart,
@@ -27,6 +64,19 @@ const About = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <section id="about" className="py-20 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-primary rounded-full animate-pulse mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="about" className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -38,24 +88,12 @@ const About = () => {
             </Badge>
             
             <h2 className="font-sweet text-4xl md:text-5xl text-primary mb-6">
-              Three Generations of Sweet Perfection
+              {aboutContent?.title || 'Three Generations of Sweet Perfection'}
             </h2>
             
             <div className="space-y-4 text-muted-foreground leading-relaxed">
               <p>
-                Founded in 1952 by Grandma Rose, Sweet Dreams began as a small neighborhood bakery 
-                with a simple mission: to bring joy to people's lives through exceptional confections.
-              </p>
-              
-              <p>
-                Today, we continue her legacy using the same time-honored recipes and traditional 
-                techniques, while incorporating modern innovations to create the perfect balance 
-                of nostalgia and contemporary taste.
-              </p>
-              
-              <p>
-                Every macaron, chocolate, and sweet treat that leaves our kitchen carries with it 
-                the love, care, and expertise that has been refined over seven decades.
+                {aboutContent?.content || 'For over 70 years, Sweet Dreams Confectionery has been crafting the finest sweets with passion and dedication. Our master confectioners use only the highest quality ingredients, combining traditional techniques with innovative flavors to create unforgettable experiences. From our signature chocolates to our delicate pastries, every creation is a testament to our commitment to excellence and the joy of sharing something truly special.'}
               </p>
             </div>
 

@@ -5,21 +5,71 @@ import { Badge } from '@/components/ui/badge';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Cart = () => {
   const { state, updateQuantity, removeItem, clearCart, closeCart, getTotalPrice } = useCart();
   const { toast } = useToast();
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (state.items.length === 0) return;
     
-    toast({
-      title: "Order Placed! 🎉",
-      description: `Thank you for your order of $${getTotalPrice().toFixed(2)}. We'll prepare your sweets with love!`,
-      duration: 4000,
-    });
-    clearCart();
-    closeCart();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Please log in",
+          description: "You need to be logged in to place an order.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculate total amount
+      const totalAmount = getTotalPrice();
+      
+      // Generate order number
+      const orderNumber = `SW-${Date.now()}`;
+      
+      // Prepare order items
+      const orderItems = state.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        category: item.category
+      }));
+
+      // Insert order into database
+      const { error } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          order_number: orderNumber,
+          total_amount: totalAmount,
+          status: 'completed',
+          items: orderItems
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Order Placed! 🎉",
+        description: `Order ${orderNumber} has been placed successfully. Thank you for your purchase!`,
+        duration: 4000,
+      });
+      
+      clearCart();
+      closeCart();
+    } catch (error) {
+      console.error('Error placing order:', error);
+      toast({
+        title: "Order Failed",
+        description: "There was an error placing your order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!state.isOpen) return null;
@@ -67,7 +117,7 @@ const Cart = () => {
                 {state.items.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4 p-4 bg-muted/30 rounded-lg">
                     <img 
-                      src={item.image} 
+                      src={item.image_url} 
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded-lg soft-shadow"
                     />

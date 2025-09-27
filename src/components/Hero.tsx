@@ -1,15 +1,63 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import heroImage from '@/assets/hero-sweets.jpg';
 
+interface HeroContent {
+  title: string;
+  content: string;
+  image_url: string;
+}
+
 const Hero = () => {
+  const [heroContent, setHeroContent] = useState<HeroContent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchHeroContent();
+  }, []);
+
+  const fetchHeroContent = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('content')
+        .select('*')
+        .eq('section', 'hero')
+        .single();
+
+      if (error) throw error;
+      setHeroContent(data);
+    } catch (error) {
+      console.error('Error fetching hero content:', error);
+      // Fallback to default content
+      setHeroContent({
+        title: 'Sweet Dreams Confectionery',
+        content: 'Creating moments of pure joy through exceptional confections since 1952. Every sweet tells a story of tradition, quality, and love.',
+        image_url: heroImage
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-primary/20">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-primary rounded-full animate-pulse mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
-          src={heroImage} 
+          src={heroContent?.image_url || heroImage} 
           alt="Premium artisanal sweets and confections" 
           className="w-full h-full object-cover"
         />
@@ -34,10 +82,9 @@ const Hero = () => {
             Artisanal Confections
           </h2>
 
-          {/* Subtitle */}
+          {/* Dynamic Content */}
           <p className="text-lg md:text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed fade-in-up" style={{ animationDelay: '0.4s' }}>
-            Indulge in our handcrafted collection of premium sweets, chocolates, and confections. 
-            Made with the finest ingredients and traditional techniques passed down through generations.
+            {heroContent?.content || 'Indulge in our handcrafted collection of premium sweets, chocolates, and confections. Made with the finest ingredients and traditional techniques passed down through generations.'}
           </p>
 
           {/* CTA Buttons */}
