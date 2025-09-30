@@ -61,11 +61,12 @@ export default function Register() {
       }
 
       toast({
-        title: "Registration Successful!",
-        description: "Please check your email to verify your account, then you can log in.",
+        title: "Welcome to Sweet Dreams!",
+        description: "Your account has been created successfully.",
       });
       
-      navigate('/login');
+      // User will be automatically redirected to /profile by the useEffect if logged in
+      navigate('/profile');
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast({
