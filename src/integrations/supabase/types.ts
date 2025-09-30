@@ -47,6 +47,33 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_orders: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
       gallery: {
         Row: {
           created_at: string
@@ -207,6 +234,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_links: {
+        Row: {
+          created_at: string
+          display_order: number | null
+          id: string
+          is_active: boolean | null
+          platform: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          platform: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number | null
+          id?: string
+          is_active?: boolean | null
+          platform?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      store_info: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          map_link: string | null
+          phone: string | null
+          updated_at: string
+          whatsapp_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          map_link?: string | null
+          phone?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          map_link?: string | null
+          phone?: string | null
+          updated_at?: string
+          whatsapp_number?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
