@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 import heroImage from '@/assets/hero-sweets.jpg';
 
 interface HeroContent {
@@ -56,10 +57,11 @@ const Hero = () => {
     <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
+        <ImageWithFallback
           src={heroContent?.image_url || heroImage} 
           alt="Premium artisanal sweets and confections" 
           className="w-full h-full object-cover"
+          fallbackBehavior="show-skeleton"
         />
         <div className="absolute inset-0 bg-background/40 hero-gradient"></div>
       </div>

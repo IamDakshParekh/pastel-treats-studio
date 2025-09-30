@@ -4,8 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-
 import { useToast } from '@/hooks/use-toast';
+import { ImageWithFallback } from '@/components/ui/image-with-fallback';
 
 interface Product {
   id: string;
@@ -36,11 +36,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   return (
     <Card className="group product-card overflow-hidden border-0 bg-card">
-      <div className="relative overflow-hidden">
-        <img 
+      <div className="relative overflow-hidden h-48 sm:h-56">
+        <ImageWithFallback
           src={product.image_url} 
           alt={product.name}
-          className="w-full h-48 sm:h-56 object-cover transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         
         {/* Category Badge */}
