@@ -2,6 +2,26 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { z } from 'zod';
+
+const customOrderSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100),
+  email: z.string().trim().email('Invalid email address').max(255),
+  phone: z.string().trim().min(1, 'Phone is required').max(20),
+  message: z.string().trim().min(1, 'Message is required').max(1000),
+});
 
 interface Product {
   id: string;
@@ -14,10 +34,19 @@ interface Product {
 }
 
 const Products = () => {
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['all']);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
   
   useEffect(() => {
     fetchProducts();
@@ -51,6 +80,49 @@ const Products = () => {
   const getProductCount = (category: string) => {
     if (category === 'all') return products.length;
     return products.filter(product => product.category === category).length;
+  };
+
+  const handleCustomOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      setIsSubmitting(true);
+
+      // Validate form data
+      const validatedData = customOrderSchema.parse(formData);
+
+      // Save to Supabase
+      const { error } = await supabase
+        .from('custom_orders')
+        .insert([validatedData]);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Thank you! Your custom order request has been received 🎉',
+        description: "We'll get back to you soon!",
+      });
+
+      // Reset form
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setIsDialogOpen(false);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast({
+          title: 'Validation Error',
+          description: error.issues[0].message,
+          variant: 'destructive',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to submit your request. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (loading) {
@@ -119,9 +191,69 @@ const Products = () => {
           <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
             Looking for something special? We create custom confections for weddings, birthdays, and special events.
           </p>
-          <Button className="btn-gold">
-            Contact Us for Custom Orders
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="btn-gold">
+                Contact Us for Custom Orders
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Request a Custom Order</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below and we'll get back to you within 24 hours.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleCustomOrderSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="product-name">Name</Label>
+                  <Input
+                    id="product-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Your name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product-email">Email</Label>
+                  <Input
+                    id="product-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product-phone">Phone</Label>
+                  <Input
+                    id="product-phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+1 (555) 123-4567"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="product-message">Message</Label>
+                  <Textarea
+                    id="product-message"
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    placeholder="Tell us about your custom order..."
+                    rows={4}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </section>
